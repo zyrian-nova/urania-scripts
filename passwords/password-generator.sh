@@ -26,7 +26,7 @@ generate_password() {
     elif [[ "$char" =~ [0-9] ]]; then
       [[ "$char" == "$prev_char" ]] && ((consecutive_numbers++)) || consecutive_numbers=0
       [[ $consecutive_numbers -lt 5 ]] && password+="$char" && prev_char="$char"
-    elif [[ "$char" =~ [!@#$%^&*()_+{}[\]|:;<>,.?/~] ]]; then
+    elif [[ "$char" =~ ["!@#$%^&*()_+{}[\]|:;<>,.?/~"] ]]; then
       [[ $symbol_count -lt $min_symbols ]] && password+="$char" && ((symbol_count++))
     fi
   done
