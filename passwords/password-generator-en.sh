@@ -1,4 +1,8 @@
 #!/bin/bash
+# This script allows you to customize the randomization of characters that can get used for a password.
+# You can also customize the length of the password and symbol density.
+# I use this as a fast way to create passwords that will expire in a few hours or secure first login credentials.
+# I omitted symbols like '^' and '$' to avoid issues with the script or symbols that are not easily found on keyboards.
 
 # Password length (adjust the number according to your needs)
 length=12
@@ -7,7 +11,7 @@ length=12
 min_symbols=3
 
 # Valid characters for the password
-characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}[]|:;<>,.?/~"
+characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#%&*()_+{}[]|:;<>,.?/~"
 
 # Function to generate the password
 generate_password() {
@@ -26,7 +30,7 @@ generate_password() {
     elif [[ "$char" =~ [0-9] ]]; then
       [[ "$char" == "$prev_char" ]] && ((consecutive_numbers++)) || consecutive_numbers=0
       [[ $consecutive_numbers -lt 5 ]] && password+="$char" && prev_char="$char"
-    elif [[ "$char" =~ ["!@#$%^&*()_+{}[\]|:;<>,.?/~"] ]]; then
+    elif [[ "$char" =~ ["!@#%&*()_+{}[\]|:;<>,.?/~"] ]]; then
       [[ $symbol_count -lt $min_symbols ]] && password+="$char" && ((symbol_count++))
     fi
   done
