@@ -1,7 +1,8 @@
 #!/bin/bash
+# Descripción
 
 # Define el color azul
-NC='\033[0m' # No Color
+NC='\033[0m' # No color
 RED='\033[31m'
 GREEN='\033[32m'
 YELLOW='\033[33m'
