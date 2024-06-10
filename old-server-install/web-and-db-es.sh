@@ -21,14 +21,14 @@ echo -e "${GREEN}Instalación terminada...${NC}"
 # Verifica si el directorio Descargas existe, si no, lo crea
 echo -e "${BLUE}Descargando herramientas externas...${NC}"
 echo -e "${BLUE}Verificando el directorio de Descargas...${NC}"
-if [ ! -d "./Descargas" ]; then
-    mkdir -p "./Descargas"
+if [ ! -d "~/Descargas" ]; then
+    mkdir -p "~/Descargas"
     echo -e "${GREEN}Directorio creado...${NC}"
 fi
 echo -e "${GREEN}Directorio listo...${NC}"
 
 # Cambia al directorio Descargas
-cd "./Descargas"
+cd "~/Descargas"
 
 # Instalación de Composer
 echo -e "${BLUE}Instalando Composer...${NC}"
@@ -38,6 +38,13 @@ sudo php composer-installer.php --filename=composer --install-dir=/usr/local/bin
 # Crear un enlace simbólico para Composer
 echo -e "${GREEN}Creando enlace simbólico para Composer...${NC}"
 sudo ln -s /usr/local/bin/composer /usr/bin/composer
+
+# Instalación de nextcloud
+echo -e "${BLUE}Instalando Nextcloud...${NC}"
+wget https://download.nextcloud.com/server/releases/latest.zip
+unzip latest.zip
+sudo mv nextcloud /var/www/
+sudo chown -R nginx:nginx /var/www/nextcloud
 
 # Instalación de phpMyAdmin
 echo -e "${BLUE}Instalando phpMyAdmin...${NC}"
@@ -118,14 +125,14 @@ sudo chmod 644 "$CONFIG_FILE"
 cat <<EOF | sudo tee "$CONFIG_FILE" > /dev/null
 server {
     listen 80;
-    server_name  ${SERVER_NAME}.urania.ops;
-    return       301 https://${SERVER_NAME}.urania.ops\$request_uri;
+    server_name  ${SERVER_NAME}.mylocker.dev;
+    return       301 https://${SERVER_NAME}.mylocker.dev\$request_uri;
     access_log   off; error_log    off;
 }
 
-server{
+server {
     listen	 443 ssl http2;
-    server_name  ${SERVER_NAME}.urania.ops;
+    server_name  ${SERVER_NAME}.mylocker.dev;
     #include      ssl_wildcard_fullchain.inc;
 
     access_log   /var/log/nginx/${SERVER_NAME}.access.log main;
@@ -163,7 +170,57 @@ server{
 EOF
 echo -e "${GREEN}Archivo de configuración de PHPMyAdmin creado en: $CONFIG_FILE...${NC}"
 
+# Configuración de servidor virtual de phpMyAdmin
+echo -e "${BLUE}Introduce el nombre del servidor para Nextcloud (ejemplo: ${RED}nextcloud${BLUE}.tu-dominio.com):...${NC}"
+read SERVER_NAME
+CONFIG_FILE="/etc/nginx/conf.d/nextcloud.conf"
+# Comprueba si el archivo ya existe y lo borra para evitar problemas de permisos
+if [ -f "$CONFIG_FILE" ]; then
+    sudo rm "$CONFIG_FILE"
+fi
+# Usa sudo para crear el archivo con privilegios elevados
+sudo touch "$CONFIG_FILE"
+sudo chmod 644 "$CONFIG_FILE"
+cat <<EOF | sudo tee "$CONFIG_FILE" > /dev/null
+server {
+    listen 80;
+    server_name  ${SERVER_NAME}.mylocker.dev;
+    return       301 https://${SERVER_NAME}.mylocker.dev\$request_uri;
+    access_log   off; error_log    off;
+}
+
+server {
+    listen	 443 ssl http2;
+    server_name  ${SERVER_NAME}.mylocker.dev;
+    #include      ssl_wildcard_fullchain.inc;
+
+    access_log   /var/log/nginx/${SERVER_NAME}.access.log main;
+    error_log    /var/log/nginx/${SERVER_NAME}.error.log;
+
+    root /var/www/${SERVER_NAME};
+    index index.html index.htm index.php;
+
+    location / {
+	try_files \$uri \$uri/ /index.php?\$query_string;
+        }
+        location ~ \.php$ {
+            	try_files \$uri =404;
+		fastcgi_pass unix:/var/run/php-fpm/www.sock;
+            	fastcgi_index index.php;
+		fastcgi_param PATH_INFO \$fastcgi_path_info;
+            	fastcgi_param PATH_TRANSLATED \$document_root\$fastcgi_path_info;
+            	fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+            	include fastcgi_params;
+        }
+}
+EOF
+echo -e "${GREEN}Archivo de configuración de Nextcloud creado en: $CONFIG_FILE...${NC}"
+
 # Habilitar e iniciar Nginx
+echo -e "${BLUE}Configurando Nginx...${NC}"
+sudo cp /etc/php-fpm.d/www.conf /etc/php-fpm.d/www.conf.bak
+sudo sed -i 's/^user = apache$/user = nginx/' /etc/php-fpm.d/www.conf
+sudo sed -i 's/^group = apache$/group = nginx/' /etc/php-fpm.d/www.conf
 echo -e "${BLUE}Habilitando Nginx...${NC}"
 sudo systemctl enable nginx
 echo -e "${BLUE}Iniciando Nginx...${NC}"
