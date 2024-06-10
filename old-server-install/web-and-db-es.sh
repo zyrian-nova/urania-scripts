@@ -15,20 +15,20 @@ echo -e "${GREEN}Actualización terminada...${NC}"
 
 # Instala herramientas
 echo -e "${BLUE}Instalando herramientas...${NC}"
-sudo dnf install nginx mariadb-server openssl net-tools bind-utils traceroute vim rsyslog yum-utils dnf-utils util-linux-user wget unzip curl php php-cli php-gd php-curl php-zip php-mbstring nodejs php php-pdo php-pecl-zip php-json php-mbstring php-mysqlnd php-bcmath php-pecl-mcrypt -y
+sudo dnf install nginx mariadb-server openssl net-tools bind-utils traceroute vim rsyslog yum-utils dnf-utils util-linux-user wget unzip curl php php-cli php-gd php-curl php-zip php-mbstring nodejs php php-pdo php-pecl-zip php-json php-mbstring php-mysqlnd php-bcmath php-pecl-mcrypt php-process php-intl php-ldap php-smbclient php-gmp php-pecl-imagick php-pecl-memcached -y
 echo -e "${GREEN}Instalación terminada...${NC}"
 
 # Verifica si el directorio Descargas existe, si no, lo crea
 echo -e "${BLUE}Descargando herramientas externas...${NC}"
 echo -e "${BLUE}Verificando el directorio de Descargas...${NC}"
-if [ ! -d "~/Descargas" ]; then
-    mkdir -p "~/Descargas"
+if [ ! -d "$HOME/Descargas" ]; then
+    mkdir -p "$HOME/Descargas"
     echo -e "${GREEN}Directorio creado...${NC}"
 fi
 echo -e "${GREEN}Directorio listo...${NC}"
 
 # Cambia al directorio Descargas
-cd "~/Descargas"
+cd "$HOME/Descargas"
 
 # Instalación de Composer
 echo -e "${BLUE}Instalando Composer...${NC}"
@@ -54,7 +54,7 @@ sudo mv phpMyAdmin-5.2.1-all-languages /usr/share/phpMyAdmin
 sudo mkdir /usr/share/phpMyAdmin/tmp
 sudo cp /usr/share/phpMyAdmin/config.sample.inc.php /usr/share/phpMyAdmin/config.inc.php
 # Vuelve al directorio anterior
-cd ..
+cd "$HOME"
 echo -e "${GREEN}Instalación terminada...${NC}"
 
 # Configuración de Nginx
@@ -112,9 +112,9 @@ cd /usr/share/phpMyAdmin/sql
 mysql -u root -p"$ROOT_PASSWORD" phpmyadmin < create_tables.sql
 
 # Configuración de servidor virtual de phpMyAdmin
-echo -e "${BLUE}Introduce el nombre del servidor para PHPMyAdmin (ejemplo: ${RED}phpmyadmin${BLUE}.tu-dominio.com):...${NC}"
+echo -e "${BLUE}Introduce el nombre del servidor para PHPMyAdmin (ejemplo: ${RED}hola${BLUE}.tu-dominio.com/phpMyAdmin):...${NC}"
 read SERVER_NAME
-CONFIG_FILE="/etc/nginx/conf.d/phpmyadmin.conf"
+CONFIG_FILE="/etc/nginx/conf.d/domain.conf"
 # Comprueba si el archivo ya existe y lo borra para evitar problemas de permisos
 if [ -f "$CONFIG_FILE" ]; then
     sudo rm "$CONFIG_FILE"
@@ -168,53 +168,7 @@ server {
         }
 }
 EOF
-echo -e "${GREEN}Archivo de configuración de PHPMyAdmin creado en: $CONFIG_FILE...${NC}"
-
-# Configuración de servidor virtual de phpMyAdmin
-echo -e "${BLUE}Introduce el nombre del servidor para Nextcloud (ejemplo: ${RED}nextcloud${BLUE}.tu-dominio.com):...${NC}"
-read SERVER_NAME
-CONFIG_FILE="/etc/nginx/conf.d/nextcloud.conf"
-# Comprueba si el archivo ya existe y lo borra para evitar problemas de permisos
-if [ -f "$CONFIG_FILE" ]; then
-    sudo rm "$CONFIG_FILE"
-fi
-# Usa sudo para crear el archivo con privilegios elevados
-sudo touch "$CONFIG_FILE"
-sudo chmod 644 "$CONFIG_FILE"
-cat <<EOF | sudo tee "$CONFIG_FILE" > /dev/null
-server {
-    listen 80;
-    server_name  ${SERVER_NAME}.mylocker.dev;
-    return       301 https://${SERVER_NAME}.mylocker.dev\$request_uri;
-    access_log   off; error_log    off;
-}
-
-server {
-    listen	 443 ssl http2;
-    server_name  ${SERVER_NAME}.mylocker.dev;
-    #include      ssl_wildcard_fullchain.inc;
-
-    access_log   /var/log/nginx/${SERVER_NAME}.access.log main;
-    error_log    /var/log/nginx/${SERVER_NAME}.error.log;
-
-    root /var/www/${SERVER_NAME};
-    index index.html index.htm index.php;
-
-    location / {
-	try_files \$uri \$uri/ /index.php?\$query_string;
-        }
-        location ~ \.php$ {
-            	try_files \$uri =404;
-		fastcgi_pass unix:/var/run/php-fpm/www.sock;
-            	fastcgi_index index.php;
-		fastcgi_param PATH_INFO \$fastcgi_path_info;
-            	fastcgi_param PATH_TRANSLATED \$document_root\$fastcgi_path_info;
-            	fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-            	include fastcgi_params;
-        }
-}
-EOF
-echo -e "${GREEN}Archivo de configuración de Nextcloud creado en: $CONFIG_FILE...${NC}"
+echo -e "${GREEN}Archivo de configuración de Sitio y PHPMyAdmin creado en: $CONFIG_FILE...${NC}"
 
 # Habilitar e iniciar Nginx
 echo -e "${BLUE}Configurando Nginx...${NC}"
