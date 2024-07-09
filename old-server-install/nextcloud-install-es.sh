@@ -135,7 +135,7 @@ sudo chmod 644 "$CONFIG_FILE"
 cat <<EOF | sudo tee "$CONFIG_FILE" > /dev/null
 <VirtualHost *:80>
   DocumentRoot /var/www/nextcloud/
-  ServerName  nextcloud.mylocker.dev
+  ServerName  nextcloud.home
 
   <Directory /var/www/nextcloud/>
     Require all granted
