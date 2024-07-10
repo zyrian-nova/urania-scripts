@@ -14,7 +14,7 @@ echo -e "${GREEN}Actualización terminada...${NC}"
 
 # Instala Git
 echo -e "${BLUE}Instalando Git y otras herramientas...${NC}"
-sudo dnf install git httpd openssl net-tools bind-utils traceroute vim rsyslog yum-utils dnf-utils util-linux-user wget zip unzip curl libxml2 -y
+sudo dnf install git httpd openssl mod_ssl net-tools bind-utils traceroute vim rsyslog yum-utils dnf-utils util-linux-user wget zip unzip curl libxml2 -y
 echo -e "${GREEN}Instalación terminada...${NC}"
 
 # Desactiva SELinux
@@ -30,6 +30,21 @@ sudo dnf -y install https://rpms.remirepo.net/enterprise/remi-release-9.2.rpm
 sudo dnf module reset php -y
 sudo dnf module install php:remi-8.3 -y
 sudo dnf install php php-cli php-gd php-curl php-zip php-mbstring -y
+
+# Instalación de Composer
+echo -e "${BLUE}Instalando Composer...${NC}"
+wget https://getcomposer.org/installer -O composer-installer.php
+sudo php composer-installer.php --filename=composer --install-dir=/usr/local/bin
+
+# Crear un enlace simbólico para Composer
+echo -e "${GREEN}Creando enlace simbólico para Composer...${NC}"
+sudo ln -s /usr/local/bin/composer /usr/bin/composer
+
+# Instalación de Node.js
+echo -e "${BLUE}Instalando Node.js...${NC}"
+curl -sL https://rpm.nodesource.com/setup_18.x -o nodesource_setup.sh
+sudo bash nodesource_setup.sh
+sudo dnf install nodejs -y
 
 # Instalación y configuración de MariaDB
 echo -e "${BLUE}Instalando y configurando MariaDB...${NC}"
@@ -181,6 +196,10 @@ cat <<EOF | sudo tee "$CONFIG_FILE" > /dev/null
   <Directory /usr/share/phpmyadmin/setup/lib>
     Deny from All
   </Directory>
+
+  ErrorLog /var/log/httpd/error_nextcloud.log
+  CustomLog /var/log/httpd/access_nextcloud.log combined
+
 </VirtualHost>
 EOF
 sudo chown -R apache:apache /var/www/nextcloud
