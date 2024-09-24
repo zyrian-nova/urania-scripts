@@ -15,8 +15,17 @@ echo -e "${GREEN}Actualización terminada...${NC}"
 
 # Instala herramientas
 echo -e "${BLUE}Instalando herramientas...${NC}"
-sudo dnf install nginx mariadb-server openssl net-tools bind-utils traceroute vim rsyslog yum-utils dnf-utils util-linux-user wget unzip curl php php-cli php-gd php-curl php-zip php-mbstring nodejs php php-pdo php-pecl-zip php-json php-mbstring php-mysqlnd php-bcmath php-pecl-mcrypt php-process php-intl php-ldap php-smbclient php-gmp php-pecl-imagick php-pecl-memcached -y
-echo -e "${GREEN}Instalación terminada...${NC}"
+sudo dnf install nginx mariadb-server openssl net-tools bind-utils traceroute vim rsyslog yum-utils dnf-utils util-linux-user wget unzip curl -y
+echo -e "${GREEN}Instalación de herramientas terminada...${NC}"
+
+# Instalación de PHP 8.3 desde el repositorio Remi
+echo -e "${BLUE}Instalando PHP 8.3...${NC}"
+sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+sudo dnf -y install https://rpms.remirepo.net/enterprise/remi-release-8.rpm
+sudo dnf module reset php -y
+sudo dnf module install php:remi-8.3 -y
+sudo dnf install php php-cli php-gd php-curl php-zip php-mbstring nodejs php php-pdo php-pecl-zip php-json php-mbstring php-mysqlnd php-bcmath php-pecl-mcrypt php-process php-intl php-ldap php-smbclient php-gmp php-pecl-imagick php-pecl-memcached -y
+echo -e "${GREEN}Instalación de PHP terminada...${NC}"
 
 # Verifica si el directorio Descargas existe, si no, lo crea
 echo -e "${BLUE}Descargando herramientas externas...${NC}"
@@ -38,13 +47,6 @@ sudo php composer-installer.php --filename=composer --install-dir=/usr/local/bin
 # Crear un enlace simbólico para Composer
 echo -e "${GREEN}Creando enlace simbólico para Composer...${NC}"
 sudo ln -s /usr/local/bin/composer /usr/bin/composer
-
-# Instalación de nextcloud
-echo -e "${BLUE}Instalando Nextcloud...${NC}"
-wget https://download.nextcloud.com/server/releases/latest.zip
-unzip latest.zip
-sudo mv nextcloud /var/www/
-sudo chown -R nginx:nginx /var/www/nextcloud
 
 # Instalación de phpMyAdmin
 echo -e "${BLUE}Instalando phpMyAdmin...${NC}"
@@ -114,7 +116,7 @@ mysql -u root -p"$ROOT_PASSWORD" phpmyadmin < create_tables.sql
 # Configuración de servidor virtual de phpMyAdmin
 echo -e "${BLUE}Introduce el nombre del servidor para PHPMyAdmin (ejemplo: ${RED}hola${BLUE}.tu-dominio.com/phpMyAdmin):...${NC}"
 read SERVER_NAME
-CONFIG_FILE="/etc/nginx/conf.d/domain.conf"
+CONFIG_FILE="/etc/nginx/conf.d/phpmyadmin.conf"
 # Comprueba si el archivo ya existe y lo borra para evitar problemas de permisos
 if [ -f "$CONFIG_FILE" ]; then
     sudo rm "$CONFIG_FILE"
@@ -125,14 +127,14 @@ sudo chmod 644 "$CONFIG_FILE"
 cat <<EOF | sudo tee "$CONFIG_FILE" > /dev/null
 server {
     listen 80;
-    server_name  ${SERVER_NAME}.mylocker.dev;
-    return       301 https://${SERVER_NAME}.mylocker.dev\$request_uri;
+    server_name  ${SERVER_NAME}.example.dev;
+    return       301 https://${SERVER_NAME}.example.dev$request_uri;
     access_log   off; error_log    off;
 }
 
 server {
     listen	 443 ssl http2;
-    server_name  ${SERVER_NAME}.mylocker.dev;
+    server_name  ${SERVER_NAME}.example.dev;
     #include      ssl_wildcard_fullchain.inc;
 
     access_log   /var/log/nginx/${SERVER_NAME}.access.log main;
